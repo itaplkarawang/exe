@@ -1,0 +1,52 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:   # bisa trigger manual dari GitHub
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout kode
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Build EXE
+        run: |
+          pyinstaller --onefile --windowed --name BulkInstaller bulk_installer.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BulkInstaller-Windows
+          path: dist\BulkInstaller.exe
+
+      - name: Create Release (jika push ke main)
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: "Bulk Installer v1.0.${{ github.run_number }}"
+          body: |
+            ## Bulk App Installer
+            Install banyak aplikasi sekaligus dari folder / USB.
+
+            ### Cara pakai:
+            1. Download `BulkInstaller.exe`
+            2. Klik kanan → **Run as Administrator**
+            3. Pilih folder/file installer → klik **Mulai Install**
+
+            > Tidak perlu install Python atau software apapun.
+          files: dist\BulkInstaller.exe
+          draft: false
+          prerelease: false
